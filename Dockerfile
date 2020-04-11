@@ -1,6 +1,6 @@
 FROM openjdk:8-jdk-alpine
 VOLUME /tmp
 EXPOSE 9007
-ADD /target/docker-demo.jar app.jar
-RUN sh -c 'touch /app.jar'
-ENTRYPOINT [ "sh", "-c", "java -Djava.security.egd=file:/dev/./urandom -jar /app.jar" ]
+ADD /var/lib/jenkins/workspace/springboot/demo/target/demo.jar demo.jar
+RUN sh -c 'touch /demo.jar'
+ENTRYPOINT [ "sh", "-c", "java -Djava.security.egd=file:/dev/./urandom -jar /demo.jar" ]

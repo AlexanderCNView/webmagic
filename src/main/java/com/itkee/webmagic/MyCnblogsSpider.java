@@ -1,5 +1,7 @@
 package com.itkee.webmagic;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.ResultItems;
 import us.codecraft.webmagic.Site;
@@ -8,8 +10,11 @@ import us.codecraft.webmagic.pipeline.Pipeline;
 import us.codecraft.webmagic.processor.PageProcessor;
 
 import java.text.DecimalFormat;
+import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class MyCnblogsSpider implements PageProcessor {
     private Site site = Site.me().setRetryTimes(3).setSleepTime(100);
@@ -17,7 +22,6 @@ public class MyCnblogsSpider implements PageProcessor {
     @Override
     public void process(Page page) {
         if (request) {
-            System.out.println(page.getUrl().toString());
             page.putField("ID",page.getHtml().xpath("/html/body/div[1]/div/div[3]/p/text()"));
             page.putField("url",page.getUrl().toString());
             page.putField("time",page.getHtml().xpath("/html/body/div[1]/div/div[6]/div/ul/li[2]/ul/li[1]/text()"));
@@ -45,6 +49,7 @@ public class MyCnblogsSpider implements PageProcessor {
 }
 
 class MyPipeline implements Pipeline {
+    private static final Logger logger = LoggerFactory.getLogger(MyPipeline.class);
     public MyPipeline() {
     }
     @Override
@@ -68,19 +73,18 @@ class MyPipeline implements Pipeline {
         }
     }
 
-    public int[] twoSum(int[] nums, int target) {
-
-        return null;
-    }
-
     public void setMsg(Map mapResults){
-        System.out.println(mapResults.get("time"));
         Msgsend.lastDate = mapResults.get("time").toString();
         String type = mapResults.get("type").toString();
         String ID = mapResults.get("ID").toString();
         String num = mapResults.get("num").toString();
         String price = mapResults.get("price").toString();
-        System.out.println(price);
+        String company = mapResults.get("company").toString();
+        String money = mapResults.get("money").toString();
+        if(money==null){
+            money = "";
+        }
+
         String allMoney = mapResults.get("allMoney").toString();
         String[] f = allMoney.split(",");
         String ff = "";
@@ -88,32 +92,45 @@ class MyPipeline implements Pipeline {
             ff = ff + f[i];
         }
         String Proportion = mapResults.get("Proportion").toString();
+        if(Proportion==null){
+            Proportion = "";
+        }
         String bisai = mapResults.get("bisai").toString();
         String url = mapResults.get("url").toString();
         String mingci = mapResults.get("mingci").toString();
         double zb = Double.valueOf(num) * Double.valueOf(price) / Double.valueOf(ff) * 100;
         DecimalFormat df = new DecimalFormat("#.000");
         String zbs = df.format(zb);
-        double gushujianyi = Double.valueOf(num) * 50000 / Double.valueOf(ff) * 100;
+        double gushujianyi = Double.valueOf(num) * 50000 / Double.valueOf(ff);
         String gushujianyis = df.format(gushujianyi);
         // 输出到控制台
         Map map = new HashMap();
-        String str = String.format("ID:%s\n" +
+//        String str = String.format("ID:%s\n" +
+//                "成交时间：%s\n" +
+//                "交易行为：%s\n" +
+//                "数量：%s\n" +
+//                "成交价格：%s\n" +
+//                "单笔盈亏比：%s\n" +
+//                "仓位占比：%s\n" +
+//                "操作股数建议：%s\n" +
+//                "比赛：%s\n" +
+//                "榜单：%s\n" +
+//                "名次：%s\n" +
+//                "详情：%s",ID,Msgsend.lastDate,type+"|"+company,num,price,Proportion,zbs+"%",gushujianyis+"",bisai,"总榜单",mingci,url);
+
+        String str = String.format(
                 "成交时间：%s\n" +
-                "交易行为：%s\n" +
-                "数量：%s\n" +
-                "成交价格：%s\n" +
-                "单笔盈亏比：%s\n" +
-                "仓位占比：%s\n" +
-                "操作股数建议：%s\n" +
-                "比赛：%s\n" +
-                "榜单：%s\n" +
-                "名次：%s\n" +
-                "详情：%s",ID,Msgsend.lastDate,type,num,price,Proportion,zbs+"%",gushujianyis+"$",bisai,"总榜单",mingci,url);
+                        "卖出：%s\n" +
+                        "数量：%s\n" +
+                        "成交价格：%s\n" +
+                        "单笔盈亏额：%s\n" +
+                        "单笔盈亏比：%s\n" +
+                        "本次操作股数建议：%s" ,Msgsend.lastDate,company,num,price,money,Proportion,gushujianyis+"");
+
         map.put("msg",str);
-        map.put("phone","18363857597,15563886389");
+        map.put("phone","18363857597,15563886389,15506599650");
         Msgsend.sendSmsByPost(map);
         Msgsend.datalist.add(mapResults);
-
+        logger.error(str + "发送时间："+ new Date());
     }
 }
